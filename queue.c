@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifndef _LIST_C
+
 #define CHAR        0
 #define INT         1
 #define FLOAT       2
@@ -13,6 +15,8 @@
 
 #define TRUE        1
 #define FALSE       0
+
+#endif
 
 #ifndef MEX_EMPTY_QUEUE
     #define MEX_EMPTY_QUEUE      "Empty queue\n"
@@ -24,16 +28,17 @@
 //Queue structure
 typedef struct {
     void *data;
-    int type;
-} basicType;
+    uint8_t type;
+} basic_type_queue;
 
 typedef struct node {
-	basicType info;
+	basic_type_queue info;
 	struct node *next;
 } node_queue;
 
 typedef struct {
 	node_queue *front, *rear;
+    uint16_t size;                  // you don't need to increase it
 } Queue;
 
 
@@ -42,15 +47,17 @@ typedef struct {
 //###################################################
 void makeNullQueue(Queue *q) {
 	q->front = q->rear = NULL;
+    q->size=0;
 }
 
 int emptyQueue(Queue q) {
 	return q.front == NULL;
 }
 
-void enQueue(Queue *q, basicType elem) {
+void enQueue(Queue *q, basic_type_queue elem) {
 	node_queue *temp;
 	temp = (node_queue*)malloc(sizeof(node_queue));
+    q->size++;
 	if (temp != NULL) {
 		temp->info = elem;
 		temp->next = NULL;
@@ -66,7 +73,7 @@ void enQueue(Queue *q, basicType elem) {
 void deQueue(Queue *q) {
     node_queue *temp;
     CHECK_IF_IS_EMPTY;
-
+    q->size--;
     temp = q->front->next;
     if (q->front->info.data != NULL)
         free(q->front->info.data);
@@ -81,8 +88,13 @@ void deQueue(Queue *q) {
 //###################################################
 
 
+int getSizeQueue(Queue q) {
+    return q.size;
+}
+
+
 /*
- * this function don't remove item from queue, it's just to visit your data
+ * this function don't remove item from queue, it just will visit your data
  * */
 void getNextElem(Queue *q) {
     node_queue *temp;
@@ -104,14 +116,23 @@ void clearAllQueue(Queue *q) {
         deQueue(q);
 }
 
-basicType* getFront(Queue q) {
+/*
+ * Get front from the queue. Front must exist, you must check it before call this function
+ *
+ * */
+basic_type_queue* getFront(Queue q) {
     if (!emptyQueue(q)) 
         return &q.front->info;
-    printf("FATAL ERROR - CHECK EMPTY QUEUE BEFOR CALL 'getFront(Queue q) FUNCTION. library: %s - line: %d \n", __FILE__, __LINE__);
-    printf("ABORT\n");
+    fprintf(stderr, "FATAL ERROR - CHECK EMPTY QUEUE BEFOR CALL 'getFront(Queue q) FUNCTION. library: %s - line: %d \n", __FILE__, __LINE__);
+    fprintf(stderr, "ABORT\n");
     exit(EXIT_FAILURE);
 }
 
+/*
+ * Get stored data from the queue's front
+ * This function is better (safer) than 'getFront'
+ *
+ * */
 void* getFrontData(Queue q) {
     if (emptyQueue(q)) {
         printf(MEX_EMPTY_QUEUE);
@@ -120,7 +141,12 @@ void* getFrontData(Queue q) {
    return (void*)q.front->info.data;
 }
 
-void print_data_default_type_queue(basicType elem) {
+/**
+ * Print stored data. If 'basic_type_queue' is a primitive type, you won't need to know which is it
+ * If 'basic_type_queue' isn't a primitive type will be print its pointer
+ *
+ * */
+void print_data_default_type_queue(basic_type_queue elem) {
     switch (elem.type) {
         case CHAR:
             printf("%c\n", *(char*)elem.data);
@@ -144,6 +170,9 @@ void print_data_default_type_queue(basicType elem) {
     }
 }
 
+/*
+ * Print all item of the queue, or its pointers
+ * */
 void printQueue(Queue *q) {
     CHECK_IF_IS_EMPTY;
 
@@ -159,9 +188,9 @@ void printQueue(Queue *q) {
 //###################################################
 
 /*
- * This function allow you to get value from queue than remove it from queue
+ * This function allow you to get value from queue then remove it from queue
  * */
-void getValueFromQueue_rm(Queue *q, void *arg, void(*genericFunction)  (basicType, void*)) {
+void getValueFromQueue_rm(Queue *q, void *arg, void(*genericFunction)  (basic_type_queue, void*)) {
     CHECK_IF_IS_EMPTY;
 
     while (!emptyQueue(*q)) {
@@ -171,12 +200,11 @@ void getValueFromQueue_rm(Queue *q, void *arg, void(*genericFunction)  (basicTyp
 }
 
 
-
 /*
- * This function allow you to get pointer from queue than remove it from queu
- * NB: after this function the queue will be clear
+ * This function allow you to get pointer from queue than remove it from queue
+ * NB: after called this function the queue will be clear (safety)
  * */
-void getPointerFromQueue_rm(Queue *q, void *arg, void(*genericFunction) (basicType *, void*)) {
+void getPointerFromQueue_rm(Queue *q, void *arg, void(*genericFunction) (basic_type_queue *, void*)) {
     CHECK_IF_IS_EMPTY;
 
     while (!emptyQueue(*q)) {
@@ -188,10 +216,10 @@ void getPointerFromQueue_rm(Queue *q, void *arg, void(*genericFunction) (basicTy
 
 /*
  * This function allow you to scan the queue without remove anything from it.
- * It needs clearAllQueue before closing to avoid leaks
+ * It needs 'clearAllQueue' function before closing your app to avoid leaks
  * */
-void getValueFromQueue(Queue q, void *arg, void(*genericFunction)(basicType, void*)) {
-    CHECK_IF_IS_EMPTY_; //_ because here you have q not *q
+void getValueFromQueue(Queue q, void *arg, void(*genericFunction)(basic_type_queue, void*)) {
+    CHECK_IF_IS_EMPTY_; //_ because here you have q, not *q
 
     while (!emptyQueue(q)) {
         genericFunction(*getFront(q), arg);
@@ -204,7 +232,7 @@ void getValueFromQueue(Queue q, void *arg, void(*genericFunction)(basicType, voi
  * You must call clearAllQueue function in order to clear the memory
  *
  * */
-void getPointerFromQueue(Queue *q, void *arg, void(*genericFunction)(basicType*, void*)) {
+void getPointerFromQueue(Queue *q, void *arg, void(*genericFunction)(basic_type_queue*, void*)) {
     CHECK_IF_IS_EMPTY;
     node_queue *temp = q->front;
     while (!emptyQueue(*q)) {

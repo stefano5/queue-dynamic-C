@@ -1,15 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include "queue.c"
 
 void insert_int(Queue *queue, int valueToAdd);
 void insert_char(Queue *queue, char valueToAdd);
 void insert_float(Queue *queue, float valueToAdd);
 void insert_str(Queue *queue, char* valueToAdd);
-void print_from_value(basicType elem, void *arg);
-void print_from_pointer(basicType *elem, void *arg);
-void change_value(basicType *elem, void *arg);
+void print_from_value(basic_type_queue elem, void *arg);
+void print_from_pointer(basic_type_queue *elem, void *arg);
+void change_value(basic_type_queue *elem, void *arg);
 
 int main() {
     //Declare new queue
@@ -32,6 +33,8 @@ int main() {
 
     printf("First function: print all item\n");
     getValueFromQueue(queue, NULL, print_from_value);
+
+    printf("size = %d\n", getSizeQueue(queue));
     
     printf("Let's make some changes, i.e. multiply all integer by 10, leave the rest unchanged\n");
     int multiplicator = 10;     //Define a multiplicator to give to your callback function (change_value)
@@ -60,7 +63,7 @@ int main() {
 }
 
 void insert_int(Queue *queue, int valueToAdd) {
-    basicType newElem;
+    basic_type_queue newElem;
     
     int *newData = (int*)malloc(sizeof(int));
     *newData  = valueToAdd;
@@ -72,7 +75,7 @@ void insert_int(Queue *queue, int valueToAdd) {
 }
 
 void insert_char(Queue *queue, char valueToAdd) {
-    basicType newElem;
+    basic_type_queue newElem;
     
     char *newData = (char*)malloc(sizeof(char));
     *newData  = valueToAdd;
@@ -84,7 +87,7 @@ void insert_char(Queue *queue, char valueToAdd) {
 }
 
 void insert_float(Queue *queue, float valueToAdd) {
-    basicType newElem;
+    basic_type_queue newElem;
     
     float *newData = (float*)malloc(sizeof(float));
     *newData  = valueToAdd;
@@ -96,7 +99,7 @@ void insert_float(Queue *queue, float valueToAdd) {
 }
 
 void insert_str(Queue *queue, char* valueToAdd) {
-    basicType newElem;
+    basic_type_queue newElem;
     
     char *newData = (char*)malloc(strlen(valueToAdd) + 1);
 
@@ -109,7 +112,7 @@ void insert_str(Queue *queue, char* valueToAdd) {
     enQueue(queue, newElem);
 }
 
-void print_from_value(basicType elem, void *arg) {
+void print_from_value(basic_type_queue elem, void *arg) {
     //char elem = *(char*)elem.data); elem++;   <= local change
     //int elem = *(int*)elem.data); and go on...
     switch (elem.type) {
@@ -135,7 +138,7 @@ void print_from_value(basicType elem, void *arg) {
     }
 }
 
-void print_from_pointer(basicType *elem, void *arg) {
+void print_from_pointer(basic_type_queue *elem, void *arg) {
     //char elem = *(char*)elem->data);  <= global change
     //int elem = *(int*)elem->data); and go on...
     switch (elem->type) {
@@ -163,7 +166,7 @@ void print_from_pointer(basicType *elem, void *arg) {
 
 }
 
-void change_value(basicType *elem, void *arg) {
+void change_value(basic_type_queue *elem, void *arg) {
     int multiplicator = *(int*)arg;
     if (elem->type == INT) {
         int *val = (int*)elem->data;
